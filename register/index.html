@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro - SocialApp</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="auth-box">
+    <h1 class="logo">SocialApp</h1>
+
+    <form id="register-form">
+      <input type="text" id="name" placeholder="Nome completo" required>
+      <input type="text" id="username" placeholder="Nome de usuário" required>
+      <input type="url" id="avatar" placeholder="Link da foto de perfil (opcional)">
+      <input type="email" id="email" placeholder="E-mail" required>
+      <input type="password" id="password" placeholder="Senha" required minlength="5">
+      <button type="submit">Cadastrar</button>
+      <p id="erro" class="erro"></p>
+    </form>
+
+    <p class="troca">Já tem conta? <a href="../login/index.html">Entrar</a></p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

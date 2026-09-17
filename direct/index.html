@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Direct - SocialApp</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="navbar">
+    <h1 class="logo">SocialApp</h1>
+    <nav>
+      <a href="../index.html">Início</a>
+      <a href="../new-post/index.html">Nova postagem</a>
+      <a href="../profile/index.html">Perfil</a>
+      <button id="logout-btn">Sair</button>
+    </nav>
+  </header>
+
+  <main class="direct-main">
+    <aside class="people-panel">
+      <h2>Mensagens</h2>
+      <div id="people-list" class="people-list">
+        <p class="muted">Carregando usuários...</p>
+      </div>
+    </aside>
+    <section class="chat-panel">
+      <div id="chat-header" class="chat-header">
+        <p class="muted">Escolha uma conversa para começar</p>
+      </div>
+      <div id="messages" class="messages">
+        <p class="muted">Suas conversas aparecerão aqui.</p>
+      </div>
+      <form id="message-form" class="message-form" hidden>
+        <input id="message-input" type="text" maxlength="500" placeholder="Escreva uma mensagem..." autocomplete="off" required>
+        <button type="submit">Enviar</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

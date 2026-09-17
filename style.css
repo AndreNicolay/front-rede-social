@@ -1,0 +1,141 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #fafafa;
+  color: #262626;
+}
+
+.navbar {
+  background: #fff;
+  border-bottom: 1px solid #dbdbdb;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+}
+
+.logo {
+  font-size: 22px;
+  margin: 0;
+  color: #262626;
+}
+
+.navbar nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.navbar a {
+  text-decoration: none;
+  color: #262626;
+  font-weight: 500;
+}
+
+.navbar a:hover { color: #0095f6; }
+
+.navbar button {
+  background: none;
+  border: 1px solid #dbdbdb;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.feed {
+  max-width: 470px;
+  margin: 24px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 0 12px;
+}
+
+.post-card {
+  background: #fff;
+  border: 1px solid #dbdbdb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.username {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.post-image {
+  width: 100%;
+  display: block;
+  max-height: 470px;
+  object-fit: cover;
+}
+
+.post-actions {
+  padding: 10px 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.like-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.like-btn.liked { color: #ed4956; font-weight: 600; }
+
+.like-count {
+  font-size: 13px;
+  color: #737373;
+}
+
+.caption {
+  padding: 8px 14px 4px;
+  font-size: 14px;
+}
+
+.comments { padding: 0 14px 14px; }
+.comment-list p { margin: 6px 0; font-size: 13px; }
+.comment-form { display: flex; gap: 8px; margin-top: 10px; }
+.comment-form input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  border-top: 1px solid #eee;
+  padding: 10px 0 2px;
+  outline: none;
+  font: inherit;
+  font-size: 13px;
+}
+.comment-form button {
+  border: 0;
+  background: none;
+  color: #0095f6;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.loading {
+  text-align: center;
+  color: #737373;
+}

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nova postagem - SocialApp</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="navbar">
+    <h1 class="logo">SocialApp</h1>
+    <nav>
+      <a href="../index.html">Início</a>
+      <a href="../profile/index.html">Perfil</a>
+      <a href="../direct/index.html">Direct</a>
+    </nav>
+  </header>
+
+  <main class="form-main">
+    <h2>Nova postagem</h2>
+
+    <form id="post-form">
+      <input type="file" id="imagem" accept="image/*" required>
+      <img id="preview" class="preview" style="display:none;">
+      <textarea id="caption" placeholder="Escreva uma legenda..." rows="3"></textarea>
+      <button type="submit">Publicar</button>
+      <p id="erro" class="erro"></p>
+    </form>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

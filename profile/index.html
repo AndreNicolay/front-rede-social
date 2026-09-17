@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfil - SocialApp</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="navbar">
+    <h1 class="logo">SocialApp</h1>
+    <nav>
+      <a href="../index.html">Início</a>
+      <a href="../new-post/index.html">Nova postagem</a>
+      <a href="../direct/index.html">Direct</a>
+      <button id="logout-btn">Sair</button>
+    </nav>
+  </header>
+
+  <main class="profile-main">
+    <section class="profile-header">
+      <img id="avatar" class="avatar-grande" src="" alt="avatar">
+      <div>
+        <h2 id="username"></h2>
+        <p id="name"></p>
+        <p id="post-count"></p>
+      </div>
+    </section>
+
+    <div id="grid" class="posts-grid">
+      <p class="loading">Carregando posts...</p>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
