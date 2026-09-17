@@ -14,11 +14,11 @@ O projeto roda normalmente em 'http://localhost:5173'
 
 | Tela | Rota | O que faz |
 | :--- | :--- | :--- |
-| **Login** | `/login` | Tela de entrada onde o usuário insere credenciais para autenticação |
-| **Cadastro** | `/register` | Permite registrar um novo usuário no sistema |
-| **Feed** | `/feed` | Lista os posts da rede social (requer token de acesso ativo) |
-| **Criar Post** | `/posts/new` | Formulário para o usuário logado publicar um novo conteúdo |
-| **Perfil** | `/profile` | Exibe informações do usuário e os posts específicos publicados por ele |
+| Login | `/login` | Tela de entrada onde o usuário insere credenciais para autenticação |
+| Cadastro | `/register` | Permite registrar um novo usuário no sistema |
+| Feed | `/feed` | Lista os posts da rede social (requer token de acesso ativo) |
+| Criar Post | `/posts/new` | Formulário para o usuário logado publicar um novo conteúdo |
+| Perfil | `/profile` | Exibe informações do usuário e os posts específicos publicados por ele |
 
 Em toda requisição protegida, mandar o header:
 Authorization: Bearer SEU_TOKEN_AQUI
