@@ -63,3 +63,21 @@ body {
   text-align: center;
   color: #737373;
 }
+
+button#follow-btn {
+  background-color: #0095f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button#message-btn {
+  background-color: #fff;
+  color: #262626;
+  border: 1px solid #dbdbdb;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}

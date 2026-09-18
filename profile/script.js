@@ -5,6 +5,16 @@ const API_URL = 'http://localhost:3000';
 const token = localStorage.getItem('token');
 const user = JSON.parse(localStorage.getItem('user') || 'null');
 
+
+const messageBtn = document.getElementById('message-btn');
+
+if (messageBtn) {
+  messageBtn.addEventListener('click', () => {
+  
+    window.location.href = `../direct/index.html?user=${user.id}`;
+  });
+}
+
 if (!token || !user) {
   window.location.href = '../login/index.html';
 }
