@@ -34,7 +34,7 @@ form.addEventListener('submit', async (e) => {
 
   try {
     // Busca o usuário pelo e-mail na API para identificar o registro correto.
-    const buscaUsuario = await fetch(`${API_URL}/users?email=${encodeURIComponent(email)}`);
+    const buscaUsuario = await fetch(`${API_URL}/users?email=${email}`);
 
     // Confirma que a busca do usuário não falhou.
     if (!buscaUsuario.ok) {
