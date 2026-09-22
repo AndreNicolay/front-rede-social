@@ -17,7 +17,7 @@ logoutBtn.addEventListener('click', () => {
   window.location.href = 'login/index.html';
 });
 
-// Inserir o HTML do Modal dinamicamente na página
+// Inserir o HTML do Modal de Curtidas dinamicamente na página
 const modalHTML = `
 <div id="likesModal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
@@ -62,7 +62,7 @@ function renderPost(post) {
   const card = document.createElement('article');
   card.className = 'post-card';
   card.innerHTML = `
-    <div class="post-header">
+    <div class="post-header" style="cursor: pointer;" data-user-id="${post.userId || post.authorId}">
       <img src="${post.avatar}" class="avatar" alt="${post.username}">
       <span class="username">${post.username}</span>
     </div>
@@ -140,8 +140,17 @@ async function abrirModalCurtidas(postId) {
   }
 }
 
-// Clique no feed (Curtir ou Clicar na contagem de likes)
+// Eventos unificados no feed (Cabeçalho, Curtidas, Botão Like, Comentários)
 feed.addEventListener('click', async (e) => {
+  // 1. Clicar no cabeçalho do post (Direcionar para o Perfil)
+  const postHeader = e.target.closest('.post-header');
+  if (postHeader) {
+    const profileUserId = postHeader.dataset.userId;
+    window.location.href = `profile/index.html?id=${profileUserId}`;
+    return;
+  }
+
+  // 2. Clicar na contagem de curtidas (Abrir Modal)
   const likeCountSpan = e.target.closest('.like-count');
   if (likeCountSpan) {
     const postId = likeCountSpan.dataset.postId;
@@ -149,6 +158,7 @@ feed.addEventListener('click', async (e) => {
     return;
   }
 
+  // 3. Clicar no botão de Curtir / Descurtir
   const likeButton = e.target.closest('.like-btn');
   if (!likeButton) return;
 
@@ -178,6 +188,7 @@ feed.addEventListener('click', async (e) => {
   if (atualizacao.ok) carregarPosts();
 });
 
+// Envio de comentários
 feed.addEventListener('submit', async (e) => {
   if (!e.target.classList.contains('comment-form')) return;
   e.preventDefault();
