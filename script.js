@@ -3,7 +3,7 @@ const API_URL = 'http://localhost:3000';
 const token = localStorage.getItem('token');
 const user = JSON.parse(localStorage.getItem('user') || 'null');
 
-// Se não tiver logado, manda pro login
+// Se não estiver logado, redireciona para o login
 if (!token || !user) {
   window.location.href = 'login/index.html';
 }
@@ -17,8 +17,9 @@ logoutBtn.addEventListener('click', () => {
   window.location.href = 'login/index.html';
 });
 
-// Inserir o HTML do Modal de Curtidas dinamicamente na página
-const modalHTML = `
+// Inserir os Modais dinamicamente na página (Curtidas e Compartilhamento)
+const modalsHTML = `
+<!-- Modal de Curtidas -->
 <div id="likesModal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
@@ -26,12 +27,25 @@ const modalHTML = `
             <button id="closeModalBtn" class="close-btn">&times;</button>
         </div>
         <div id="likesListContainer" class="modal-body">
-            <p style="text-align: center; color: #737373;">Carregando...</p>
+            <p style="text-align: center; color: #737373;">A carregar...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Compartilhamento -->
+<div id="shareModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Compartilhar publicação</h3>
+            <button id="closeShareModalBtn" class="close-btn">&times;</button>
+        </div>
+        <div id="shareListContainer" class="modal-body">
+            <p style="text-align: center; color: #737373;">A carregar contactos...</p>
         </div>
     </div>
 </div>
 `;
-document.body.insertAdjacentHTML('beforeend', modalHTML);
+document.body.insertAdjacentHTML('beforeend', modalsHTML);
 
 async function carregarPosts() {
   const resposta = await fetch(`${API_URL}/posts?_sort=createdAt&_order=desc`, {
@@ -47,7 +61,7 @@ async function carregarPosts() {
   feed.innerHTML = '';
 
   if (posts.length === 0) {
-    feed.innerHTML = '<p class="loading">Nenhum post ainda. Seja o primeiro a postar!</p>';
+    feed.innerHTML = '<p class="loading">Ainda não há posts. Seja o primeiro a publicar!</p>';
     return;
   }
 
@@ -69,6 +83,7 @@ function renderPost(post) {
     <img src="${post.imageUrl}" class="post-image" alt="post de ${post.username}">
     <div class="post-actions">
       <button class="like-btn ${jaCurtiu ? 'liked' : ''}" data-id="${post.id}">${jaCurtiu ? '♥ Descurtir' : '♡ Curtir'}</button>
+      <button class="share-btn" data-post-id="${post.id}">✈️ Enviar</button>
       <span class="like-count" data-post-id="${post.id}">${likes.length} curtida(s)</span>
     </div>
     <p class="caption"><strong>${post.username}</strong> ${post.caption}</p>
@@ -85,46 +100,33 @@ function renderPost(post) {
   feed.appendChild(card);
 }
 
-// Lógica do Modal de Curtidas
+// --- Lógica do Modal de Curtidas ---
 const likesModal = document.getElementById('likesModal');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const likesListContainer = document.getElementById('likesListContainer');
 
-closeModalBtn.addEventListener('click', () => {
-  likesModal.style.display = 'none';
-});
-
-likesModal.addEventListener('click', (e) => {
-  if (e.target === likesModal) {
-    likesModal.style.display = 'none';
-  }
-});
+closeModalBtn.addEventListener('click', () => { likesModal.style.display = 'none'; });
+likesModal.addEventListener('click', (e) => { if (e.target === likesModal) likesModal.style.display = 'none'; });
 
 async function abrirModalCurtidas(postId) {
   likesModal.style.display = 'flex';
-  likesListContainer.innerHTML = '<p style="text-align: center; color: #737373;">Carregando...</p>';
+  likesListContainer.innerHTML = '<p style="text-align: center; color: #737373;">A carregar...</p>';
 
   try {
-    const respostaPost = await fetch(`${API_URL}/posts/${postId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const respostaPost = await fetch(`${API_URL}/posts/${postId}`, { headers: { Authorization: `Bearer ${token}` } });
     const post = await respostaPost.json();
 
-    const respostaUsers = await fetch(`${API_URL}/users`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const respostaUsers = await fetch(`${API_URL}/users`, { headers: { Authorization: `Bearer ${token}` } });
     const users = await respostaUsers.json();
 
     likesListContainer.innerHTML = '';
-
     const likes = Array.isArray(post.likes) ? post.likes : [];
     if (likes.length === 0) {
-      likesListContainer.innerHTML = '<p style="text-align: center; color: #737373;">Nenhuma curtida ainda.</p>';
+      likesListContainer.innerHTML = '<p style="text-align: center; color: #737373;">Ainda sem curtidas.</p>';
       return;
     }
 
     const quemCurtiu = users.filter(u => likes.some(likeId => String(likeId) === String(u.id)));
-
     quemCurtiu.forEach(u => {
       const userItem = document.createElement('div');
       userItem.classList.add('like-user-item');
@@ -140,9 +142,103 @@ async function abrirModalCurtidas(postId) {
   }
 }
 
-// Eventos unificados no feed (Cabeçalho, Curtidas, Botão Like, Comentários)
+// --- Lógica do Modal de Compartilhamento ---
+const shareModal = document.getElementById('shareModal');
+const closeShareModalBtn = document.getElementById('closeShareModalBtn');
+const shareListContainer = document.getElementById('shareListContainer');
+let postIdParaCompartilhar = null;
+
+closeShareModalBtn.addEventListener('click', () => { shareModal.style.display = 'none'; });
+shareModal.addEventListener('click', (e) => { if (e.target === shareModal) shareModal.style.display = 'none'; });
+
+async function abrirModalCompartilhar(postId) {
+  postIdParaCompartilhar = postId;
+  shareModal.style.display = 'flex';
+  shareListContainer.innerHTML = '<p style="text-align: center; color: #737373;">A carregar contactos...</p>';
+
+  try {
+    const respostaUsers = await fetch(`${API_URL}/users`, { headers: { Authorization: `Bearer ${token}` } });
+    const users = await respostaUsers.json();
+
+    shareListContainer.innerHTML = '';
+    const outrosUsuarios = users.filter(u => String(u.id) !== String(user.id));
+
+    if (outrosUsuarios.length === 0) {
+      shareListContainer.innerHTML = '<p style="text-align: center; color: #737373;">Nenhum outro utilizador encontrado.</p>';
+      return;
+    }
+
+    outrosUsuarios.forEach(u => {
+      const userItem = document.createElement('div');
+      userItem.classList.add('share-user-item');
+      userItem.innerHTML = `
+        <div class="share-user-info">
+          <img src="${u.avatar || 'https://via.placeholder.com/150'}" alt="${u.username}">
+          <span>${u.username}</span>
+        </div>
+        <button class="send-share-btn" data-receiver-id="${u.id}">Enviar</button>
+      `;
+      shareListContainer.appendChild(userItem);
+    });
+  } catch (error) {
+    console.error("Erro ao carregar contactos:", error);
+    shareListContainer.innerHTML = '<p style="text-align: center; color: red;">Erro ao carregar contactos.</p>';
+  }
+}
+
+// Ação de enviar o post estruturado como mini card para o Direct
+shareListContainer.addEventListener('click', async (e) => {
+  const sendBtn = e.target.closest('.send-share-btn');
+  if (!sendBtn || !postIdParaCompartilhar) return;
+
+  const receiverId = sendBtn.dataset.receiverId;
+
+  try {
+    const respPost = await fetch(`${API_URL}/posts/${postIdParaCompartilhar}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const postObj = await respPost.json();
+
+    // Mini card com tamanho compacto e imagem tratada (object-fit)
+    const mensagemHTML = `
+      <div class="shared-post-preview" data-post-id="${postIdParaCompartilhar}" style="border: 1px solid #dbdbdb; border-radius: 8px; overflow: hidden; max-width: 180px; background: #fff; margin: 2px 0; cursor: pointer;" title="Ver publicação">
+        <div style="display: flex; align-items: center; padding: 6px 8px; gap: 6px; font-size: 12px; font-weight: 600; color: #262626; border-bottom: 1px solid #efefef;">
+          <span>@${postObj.username}</span>
+        </div>
+        <img src="${postObj.imageUrl}" style="width: 100%; height: 120px; object-fit: cover; display: block;" alt="Post compartilhado">
+        <div style="padding: 6px 8px; font-size: 11px; color: #737373; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          ${postObj.caption || 'Publicação'}
+        </div>
+      </div>
+    `;
+
+    const resposta = await fetch(`${API_URL}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        senderId: user.id,
+        receiverId: Number(receiverId),
+        text: mensagemHTML,
+        createdAt: new Date().toISOString()
+      })
+    });
+
+    if (resposta.ok) {
+      alert('Post partilhado com sucesso no Direct!');
+      shareModal.style.display = 'none';
+    } else {
+      alert('Erro ao enviar a mensagem.');
+    }
+  } catch (error) {
+    console.error("Erro ao enviar post:", error);
+  }
+});
+
+// --- Eventos unificados no Feed ---
 feed.addEventListener('click', async (e) => {
-  // 1. Clicar no cabeçalho do post (Direcionar para o Perfil)
   const postHeader = e.target.closest('.post-header');
   if (postHeader) {
     const profileUserId = postHeader.dataset.userId;
@@ -150,7 +246,6 @@ feed.addEventListener('click', async (e) => {
     return;
   }
 
-  // 2. Clicar na contagem de curtidas (Abrir Modal)
   const likeCountSpan = e.target.closest('.like-count');
   if (likeCountSpan) {
     const postId = likeCountSpan.dataset.postId;
@@ -158,7 +253,13 @@ feed.addEventListener('click', async (e) => {
     return;
   }
 
-  // 3. Clicar no botão de Curtir / Descurtir
+  const shareButton = e.target.closest('.share-btn');
+  if (shareButton) {
+    const postId = shareButton.dataset.postId;
+    abrirModalCompartilhar(postId);
+    return;
+  }
+
   const likeButton = e.target.closest('.like-btn');
   if (!likeButton) return;
 

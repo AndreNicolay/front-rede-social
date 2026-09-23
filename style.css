@@ -230,3 +230,58 @@ body {
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
 }
+
+.share-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #262626;
+    font-weight: 500;
+}
+
+.share-btn:hover {
+    color: #0095f6;
+}
+
+.share-user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #efefef;
+}
+
+.share-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.share-user-info img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.share-user-info span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #262626;
+}
+
+.send-share-btn {
+    background-color: #0095f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.send-share-btn:hover {
+    background-color: #1877f2;
+}
