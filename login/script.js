@@ -20,9 +20,22 @@ form.addEventListener('submit', async (e) => {
 
   if (!resposta.ok) {
     erro.textContent = 'E-mail ou senha inválidos.';
+    let countErro = localStorage.getItem('countErro') || 0;
+    countErro++;
+    localStorage.setItem('countErro', countErro);
+    if (countErro >= 3) {
+      erro.textContent = 'Muitas tentativas de login. esqueceu sua senha?';
+      const redefinicaoLink = document.createElement('a');
+      const emailParaRedefinicao = encodeURIComponent(email);
+      redefinicaoLink.href = `../redefinicao/index.html?email=${emailParaRedefinicao}`;
+      localStorage.setItem('emailRedefinicao', email);
+      redefinicaoLink.textContent = 'Clique aqui para redefinir sua senha.';
+      erro.appendChild(redefinicaoLink);
+      return;
+    }
     return;
   }
-
+   localStorage.setItem('countErro', 0);
   const dados = await resposta.json();
 
   // json-server-auth devolve { accessToken, user }

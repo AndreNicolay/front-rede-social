@@ -26,14 +26,14 @@ function escapeHtml(value = '') {
 async function carregarUsuarios() {
   const resposta = await fetch(`${API_URL}/users`, { headers: { Authorization: `Bearer ${token}` } });
   if (!resposta.ok) {
-    peopleList.innerHTML = '<p class="muted">Não foi possível carregar os usuários.</p>';
+    peopleList.innerHTML = '<p class="muted">Não foi possível carregar os utilizadores.</p>';
     return;
   }
 
   const usuarios = (await resposta.json()).filter(item => String(item.id) !== String(user.id));
   peopleList.innerHTML = '';
   if (usuarios.length === 0) {
-    peopleList.innerHTML = '<p class="muted">Nenhum outro usuário encontrado.</p>';
+    peopleList.innerHTML = '<p class="muted">Nenhum outro utilizador encontrado.</p>';
     return;
   }
 
@@ -64,9 +64,13 @@ async function carregarMensagens() {
     (String(mensagem.senderId) === String(selectedUser.id) && String(mensagem.receiverId) === String(user.id))
   ).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-  messagesElement.innerHTML = mensagens.length ? mensagens.map(mensagem => `
-    <p class="message ${String(mensagem.senderId) === String(user.id) ? 'mine' : ''}">${escapeHtml(mensagem.text)}</p>
-  `).join('') : '<p class="muted">Nenhuma mensagem ainda. Diga oi!</p>';
+  messagesElement.innerHTML = mensagens.length ? mensagens.map(mensagem => {
+    // Verifica se a mensagem é um post partilhado para não aplicar o escapeHtml e renderizar o card com imagem
+    const isSharedPost = mensagem.text && mensagem.text.includes('shared-post-preview');
+    const conteudo = isSharedPost ? mensagem.text : escapeHtml(mensagem.text);
+    
+    return `<div class="message ${String(mensagem.senderId) === String(user.id) ? 'mine' : ''}">${conteudo}</div>`;
+  }).join('') : '<p class="muted">Nenhuma mensagem ainda. Diga oi!</p>';
   messagesElement.scrollTop = messagesElement.scrollHeight;
 }
 
@@ -93,3 +97,15 @@ messageForm.addEventListener('submit', async event => {
 });
 
 carregarUsuarios();
+
+// Adiciona o redirecionamento ao clicar no mini card do post dentro do chat
+messagesElement.addEventListener('click', (e) => {
+  const sharedPostCard = e.target.closest('.shared-post-preview');
+  if (!sharedPostCard) return;
+
+  const postId = sharedPostCard.dataset.postId;
+  if (postId) {
+    // Redireciona para a página principal/feed (ajusta o caminho se o index.html estiver na raiz)
+    window.location.href = `../index.html?highlight=${postId}`;
+  }
+});

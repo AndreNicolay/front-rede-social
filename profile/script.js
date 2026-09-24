@@ -19,13 +19,81 @@ if (!token || !user) {
   window.location.href = '../login/index.html';
 }
 
+const avatar = document.getElementById('avatar');
+const avatarTrigger = document.getElementById('avatarTrigger');
+const avatarModal = document.getElementById('avatarModal');
+const closeAvatarModalBtn = document.getElementById('closeAvatarModalBtn');
+const cancelAvatarBtn = document.getElementById('cancelAvatarBtn');
+const removeAvatarBtn = document.getElementById('removeAvatarBtn');
+const avatarInput = document.getElementById('avatarInput');
+const avatarPreview = document.getElementById('avatarPreview');
+
+function renderAvatar() {
+  const imageSrc = user.avatar && user.avatar.trim() ? user.avatar : '';
+  avatar.src = imageSrc;
+  avatarPreview.src = imageSrc;
+}
+
+function openAvatarModal() {
+  avatarPreview.src = user.avatar && user.avatar.trim() ? user.avatar : '';
+  avatarModal.classList.remove('hidden');
+  avatarModal.setAttribute('aria-hidden', 'false');
+}
+
+function closeAvatarModal() {
+  avatarModal.classList.add('hidden');
+  avatarModal.setAttribute('aria-hidden', 'true');
+  avatarInput.value = '';
+}
+
+function updateUserAvatar(newAvatar) {
+  user.avatar = newAvatar;
+  localStorage.setItem('user', JSON.stringify(user));
+  renderAvatar();
+}
+
 document.getElementById('logout-btn').addEventListener('click', () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
   window.location.href = '../login/index.html';
 });
 
-document.getElementById('avatar').src = user.avatar;
+avatarTrigger.addEventListener('click', openAvatarModal);
+closeAvatarModalBtn.addEventListener('click', closeAvatarModal);
+cancelAvatarBtn.addEventListener('click', closeAvatarModal);
+avatarModal.addEventListener('click', (event) => {
+  if (event.target === avatarModal) {
+    closeAvatarModal();
+  }
+});
+
+removeAvatarBtn.addEventListener('click', () => {
+  updateUserAvatar('');
+  closeAvatarModal();
+});
+
+avatarInput.addEventListener('change', (event) => {
+  const file = event.target.files && event.target.files[0];
+
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    alert('Selecione uma imagem válida.');
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    const imageBase64 = String(reader.result || '');
+    updateUserAvatar(imageBase64);
+    closeAvatarModal();
+  };
+
+  reader.readAsDataURL(file);
+});
+
+renderAvatar();
 document.getElementById('username').textContent = '@' + user.username;
 document.getElementById('name').textContent = user.name;
 

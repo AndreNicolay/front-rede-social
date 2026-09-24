@@ -8,6 +8,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: fadeInPage 0.4s ease-in-out;
 }
 
 .auth-box {
@@ -59,4 +60,14 @@ button:hover {
 .troca {
   margin-top: 16px;
   font-size: 14px;
+}
+
+
+@keyframes fadeInPage {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
