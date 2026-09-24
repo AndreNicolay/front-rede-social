@@ -20,7 +20,10 @@
 
   <main class="profile-main">
     <section class="profile-header">
-      <img id="avatar" class="avatar-grande" src="" alt="avatar">
+      <button id="avatarTrigger" class="avatar-trigger" type="button" aria-label="Alterar foto de perfil">
+        <img id="avatar" class="avatar-grande" src="" alt="avatar">
+      </button>
+
       <div>
         <h2 id="username"></h2>
         <p id="name"></p>
@@ -34,6 +37,29 @@
       <p class="loading">Carregando posts...</p>
     </div>
   </main>
+
+  <div id="avatarModal" class="modal-overlay hidden" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="avatarModalTitle">
+      <div class="modal-header">
+        <h3 id="avatarModalTitle">Foto de perfil</h3>
+        <button id="closeAvatarModalBtn" class="close-btn" type="button" aria-label="Fechar modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="avatar-preview-wrap">
+          <img id="avatarPreview" class="avatar-preview" src="" alt="Pré-visualização da foto de perfil">
+        </div>
+
+        <label for="avatarInput" class="modal-btn upload-btn">Escolher imagem</label>
+        <input id="avatarInput" type="file" accept="image/*" hidden>
+
+        <div class="modal-actions">
+          <button id="removeAvatarBtn" class="modal-btn danger-btn" type="button">Remover foto</button>
+          <button id="cancelAvatarBtn" class="modal-btn secondary-btn" type="button">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
