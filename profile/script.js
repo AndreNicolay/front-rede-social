@@ -155,10 +155,16 @@ document.getElementById('logout-btn').addEventListener('click', () => {
   window.location.href = '../login/index.html';
 });
 
-avatarTrigger.addEventListener('click', openAvatarModal);
-closeAvatarModalBtn.addEventListener('click', closeAvatarModal);
-cancelAvatarBtn.addEventListener('click', closeAvatarModal);
-avatarModal.addEventListener('click', (event) => {
+// Função para validar a abertura do modal de avatar apenas se o usuário estiver visualizando seu próprio perfil
+const isOwnProfile = !profileUserId || String(profileUserId) === String(loggedUser?.id);
+
+if (loggedUser && isOwnProfile) {
+  avatarTrigger?.addEventListener('click', openAvatarModal);
+  closeAvatarModalBtn?.addEventListener('click', closeAvatarModal);
+  cancelAvatarBtn?.addEventListener('click', closeAvatarModal);
+}
+
+avatarModal?.addEventListener('click', (event) => {
   if (event.target === avatarModal) {
     closeAvatarModal();
   }
