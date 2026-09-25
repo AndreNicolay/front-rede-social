@@ -1,6 +1,6 @@
 // Tela: Login
 
-const API_URL = 'http://localhost:3000';
+const API_URL = 'https://json-server-auth-rede-social.onrender.com';
 
 const form = document.getElementById('login-form');
 const erro = document.getElementById('erro');

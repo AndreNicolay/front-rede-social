@@ -1,6 +1,6 @@
 // Tela: Nova postagem
 
-const API_URL = 'http://localhost:3000';
+const API_URL = 'https://json-server-auth-rede-social.onrender.com';
 
 const token = localStorage.getItem('token');
 const user = JSON.parse(localStorage.getItem('user') || 'null');
