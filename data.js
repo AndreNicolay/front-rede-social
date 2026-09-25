@@ -1,1 +1,1 @@
-export const API_URL = "https://json-server-auth-rede-social.onrender.com";
+export const API_URL = "https://json-server-auth-rede-social-xe91.onrender.com/";
