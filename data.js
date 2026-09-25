@@ -1,0 +1,1 @@
+export const API_URL = "https://json-server-auth-rede-social.onrender.com";

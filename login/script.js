@@ -1,6 +1,5 @@
 // Tela: Login
-
-const API_URL = 'http://localhost:3000';
+import { API_URL } from './data.js';
 
 const form = document.getElementById('login-form');
 const erro = document.getElementById('erro');

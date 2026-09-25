@@ -1,6 +1,5 @@
 // TELA REDEFINIÇÃO DE SENHA
-
-const API_URL = 'http://localhost:3000';
+import { API_URL } from './data.js';
 
 // Captura os elementos da tela de redefinição para manipular o formulário e mensagens.
 const form = document.getElementById('redefinicao-form');

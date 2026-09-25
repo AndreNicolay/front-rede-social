@@ -1,6 +1,5 @@
 // Tela: Perfil
-
-const API_URL = 'http://localhost:3000';
+import { API_URL } from './data.js';
 
 const token = localStorage.getItem('token');
 const loggedUser = JSON.parse(localStorage.getItem('user') || 'null');
