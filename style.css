@@ -83,6 +83,21 @@ body {
     font-size: 14px;
 }
 
+.username-link {
+    font-weight: 600;
+    font-size: 14px;
+    color: #262626;
+    text-decoration: none;
+}
+
+.username-link:hover {
+    text-decoration: underline;
+}
+
+.caption-username {
+    display: inline;
+}
+
 .post-image {
     width: 100%;
     display: block;

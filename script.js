@@ -72,13 +72,15 @@ function renderPost(post) {
   const likes = Array.isArray(post.likes) ? post.likes : [];
   const comments = Array.isArray(post.comments) ? post.comments : [];
   const jaCurtiu = likes.some(id => String(id) === String(user.id));
+  const authorId = post.userId || post.authorId;
+  const profileLink = `profile/index.html?id=${authorId}`;
 
   const card = document.createElement('article');
   card.className = 'post-card';
   card.innerHTML = `
-    <div class="post-header" style="cursor: pointer;" data-user-id="${post.userId || post.authorId}">
+    <div class="post-header" style="cursor: pointer;" data-user-id="${authorId}">
       <img src="${post.avatar}" class="avatar" alt="${post.username}">
-      <span class="username">${post.username}</span>
+      <a href="${profileLink}" class="username-link" data-user-id="${authorId}">${post.username}</a>
     </div>
     <img src="${post.imageUrl}" class="post-image" alt="post de ${post.username}">
     <div class="post-actions">
@@ -86,7 +88,7 @@ function renderPost(post) {
       <button class="share-btn" data-post-id="${post.id}">✈️ Enviar</button>
       <span class="like-count" data-post-id="${post.id}">${likes.length} curtida(s)</span>
     </div>
-    <p class="caption"><strong>${post.username}</strong> ${post.caption}</p>
+    <p class="caption"><a href="${profileLink}" class="username-link caption-username" data-user-id="${authorId}"><strong>${post.username}</strong></a> ${post.caption}</p>
     <section class="comments" aria-label="Comentários">
       <div class="comment-list">
         ${comments.map(comment => `<p><strong>${comment.username}</strong>${comment.text}</p>`).join('')}
@@ -239,6 +241,15 @@ shareListContainer.addEventListener('click', async (e) => {
 
 // --- Eventos unificados no Feed ---
 feed.addEventListener('click', async (e) => {
+  const profileLink = e.target.closest('.username-link');
+  if (profileLink) {
+    const profileUserId = profileLink.dataset.userId;
+    if (profileUserId) {
+      window.location.href = `profile/index.html?id=${profileUserId}`;
+      return;
+    }
+  }
+
   const postHeader = e.target.closest('.post-header');
   if (postHeader) {
     const profileUserId = postHeader.dataset.userId;
