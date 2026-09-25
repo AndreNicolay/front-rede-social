@@ -1,5 +1,5 @@
 // TELA REDEFINIÇÃO DE SENHA
-import { API_URL } from './data.js';
+import { API_URL } from '../data.js';
 
 // Captura os elementos da tela de redefinição para manipular o formulário e mensagens.
 const form = document.getElementById('redefinicao-form');

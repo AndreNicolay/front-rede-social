@@ -1,5 +1,5 @@
 // Tela: Login
-import { API_URL } from './data.js';
+import { API_URL } from '../data.js';
 
 const form = document.getElementById('login-form');
 const erro = document.getElementById('erro');

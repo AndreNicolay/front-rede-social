@@ -1,5 +1,5 @@
 // Tela: Cadastro
-import { API_URL } from './data.js';
+import { API_URL } from '../data.js';
 
 const form = document.getElementById('register-form');
 const erro = document.getElementById('erro');
