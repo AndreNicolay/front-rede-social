@@ -1,15 +1,31 @@
-import { API_URL } from '../data.js';
+import { API_URL } from '../data.js';   
 
 const token = localStorage.getItem('token');
 const user = JSON.parse(localStorage.getItem('user') || 'null');
 
-if (!token || !user) window.location.href = '../login/index.html';
+if (!token || !user) {
+  window.location.replace('../login/index.html');
+  throw new Error('Não autenticado');
+}
 
 document.getElementById('logout-btn').addEventListener('click', () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  socket.disconnect();
   window.location.href = '../login/index.html';
 });
+
+// ===== SOCKET.IO =====
+const socket = io(API_URL, { auth: { token } });
+
+socket.on('connect', () => {
+  console.log('socket conectado', socket.id);
+  if (selectedUser) carregarMensagens(); // 🆕 ao reconectar, busca as mensagens que chegaram enquanto estava offline
+});
+socket.on('disconnect', (motivo) => console.log('socket caiu:', motivo));
+socket.on('connect_error', (erro) => console.error('erro de conexão:', erro.message));
+socket.onAny((evento, ...args) => console.log('evento recebido:', evento, args));
+
 
 const peopleList = document.getElementById('people-list');
 const chatHeader = document.getElementById('chat-header');
@@ -22,6 +38,18 @@ function escapeHtml(value = '') {
   return String(value).replace(/[&<>'"]/g, character => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
   }[character]));
+}
+
+// 🆕 Aceita os dois formatos de mensagem:
+// antigo (senderId/receiverId/text/createdAt) e novo do socket (userId/paraId/texto/criadaEm)
+function normalizarMensagem(m) {
+  return {
+    ...m,
+    de: String(m.userId ?? m.senderId),
+    para: String(m.paraId ?? m.receiverId),
+    texto: m.texto ?? m.text ?? '',
+    data: m.criadaEm ?? m.createdAt
+  };
 }
 
 async function carregarUsuarios() {
@@ -57,42 +85,59 @@ async function selecionarUsuario(usuario) {
   messageInput.focus();
 }
 
+// ✏️ Agora usa a rota /chat/:outroId do servidor (o GET /messages é bloqueado pela regra 400)
 async function carregarMensagens() {
-  const resposta = await fetch(`${API_URL}/messages`, { headers: { Authorization: `Bearer ${token}` } });
-  if (!resposta.ok) return;
-  const mensagens = (await resposta.json()).filter(mensagem =>
-    (String(mensagem.senderId) === String(user.id) && String(mensagem.receiverId) === String(selectedUser.id)) ||
-    (String(mensagem.senderId) === String(selectedUser.id) && String(mensagem.receiverId) === String(user.id))
-  ).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  if (!selectedUser) return;
+  const alvo = selectedUser; // evita mostrar a conversa errada se o usuário trocar rápido de contato
+
+  const resposta = await fetch(`${API_URL}/chat/${encodeURIComponent(alvo.id)}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!resposta.ok || alvo !== selectedUser) return;
+
+  const mensagens = (await resposta.json())
+    .map(normalizarMensagem)
+    .sort((a, b) => new Date(a.data) - new Date(b.data));
 
   messagesElement.innerHTML = mensagens.length ? mensagens.map(mensagem => {
     // Verifica se a mensagem é um post partilhado para não aplicar o escapeHtml e renderizar o card com imagem
-    const isSharedPost = mensagem.text && mensagem.text.includes('shared-post-preview');
-    const conteudo = isSharedPost ? mensagem.text : escapeHtml(mensagem.text);
+    const isSharedPost = mensagem.texto.includes('shared-post-preview');
+    const conteudo = isSharedPost ? mensagem.texto : escapeHtml(mensagem.texto);
     
-    return `<div class="message ${String(mensagem.senderId) === String(user.id) ? 'mine' : ''}">${conteudo}</div>`;
+    return `<div class="message ${mensagem.de === String(user.id) ? 'mine' : ''}">${conteudo}</div>`;
   }).join('') : '<p class="muted">Nenhuma mensagem ainda. Diga oi!</p>';
   messagesElement.scrollTop = messagesElement.scrollHeight;
 }
 
+// ✏️ Envio pelo socket (o POST /messages é bloqueado pela regra 400)
 messageForm.addEventListener('submit', async event => {
   event.preventDefault();
   const text = messageInput.value.trim();
   if (!text || !selectedUser) return;
 
-  const resposta = await fetch(`${API_URL}/messages`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      senderId: user.id,
-      receiverId: selectedUser.id,
-      text,
-      createdAt: new Date().toISOString()
-    })
-  });
+  try {
+    // emitWithAck manda o callback que o servidor exige e espera a resposta
+    const resposta = await socket.timeout(5000).emitWithAck('mensagem:enviar', {
+      paraId: selectedUser.id,
+      texto: text
+    });
 
-  if (resposta.ok) {
-    messageInput.value = '';
+    if (resposta.ok) {
+      messageInput.value = '';
+      carregarMensagens();
+    } else {
+      console.error('erro ao enviar:', resposta.erro);
+    }
+  } catch {
+    console.error('o servidor não respondeu ao envio');
+  }
+});
+
+// 🆕 Recebe mensagens em tempo real
+socket.on('mensagem:nova', (mensagem) => {
+  if (!selectedUser) return;
+  const outro = String(selectedUser.id);
+  if (String(mensagem.userId) === outro || String(mensagem.paraId) === outro) {
     carregarMensagens();
   }
 });
