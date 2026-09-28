@@ -1,6 +1,7 @@
 // URL render
 import { API_URL } from './data.js';
 
+
 const token = localStorage.getItem('token');
 const user = JSON.parse(localStorage.getItem('user') || 'null');
 
