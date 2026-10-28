@@ -25,7 +25,7 @@ export default defineConfig({
     },
     {
       command: `npx vite --port ${PORTA_FRONT} --strictPort`,
-      url: `${FRONT}/login/index.html`,
+      url: `${FRONT}/login`,
       reuseExistingServer: false,
       env: { VITE_API_URL: API_TESTE },
     },

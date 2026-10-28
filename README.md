@@ -1,6 +1,8 @@
-# Rede Social - Front-End
+# SnapShot - Front-End
 
-Interface web desenvolvida para consumir a API de autenticação e posts da rede social, permitindo o fluxo completo de cadastro, login, listagem e criação de publicações.
+Interface web da rede social SnapShot: cadastro, login, feed com curtidas e comentários, criação de posts, perfil e chat em tempo real (Direct).
+
+Feito com **Vue 3 + TypeScript**, **Vue Router**, **axios** e **Socket.IO**. Consome a API json-server-auth hospedada no Render.
 
 ## Como rodar
 
@@ -9,37 +11,72 @@ npm install
 npm run dev
 ```
 
-O projeto roda normalmente em 'http://localhost:5173'
+O projeto roda em `http://localhost:5173`.
 
-## Principais Telas
+| Comando | O que faz |
+|---|---|
+| `npm run dev` | Servidor de desenvolvimento |
+| `npm run build` | Gera a versão de produção em `dist/` |
+| `npm run preview` | Serve o `dist/` localmente |
+| `npm run typecheck` | Checa os tipos (`vue-tsc`) |
+| `npm test` | Testes E2E (Playwright) |
 
-| Tela       | Rota       | O que faz                                                              |
-|------------|------------|------------------------------------------------------------------------|
-| Login      | /login     | Tela de entrada onde o usuário insere credenciais para autenticação     |
-| Cadastro   | /register  | Permite registrar um novo usuário no sistema                          |
-| Feed       | /feed      | Lista os posts da rede social (requer token de acesso ativo)          |
-| Criar Post | /posts/new | Formulário para o usuário logado publicar um novo conteúdo            |
-| Perfil     | /profile   | Exibe informações do usuário e os posts específicos publicados por ele |
+## Principais telas
 
-Em toda requisição protegida, mandar o header:
-Authorization: Bearer SEU_TOKEN_AQUI
+| Tela | Rota | O que faz |
+|---|---|---|
+| Login | `/login` | Entrada com e-mail e senha; após 3 erros, oferece redefinir a senha |
+| Cadastro | `/register` | Registra um novo usuário |
+| Redefinição | `/redefinicao` | Troca a senha a partir do e-mail |
+| Feed | `/feed` | Lista os posts; curtir, comentar e compartilhar no Direct (`?highlight=<id>` destaca um post) |
+| Criar Post | `/posts/new` | Publica uma imagem com legenda |
+| Perfil | `/profile` e `/profile/:id` | Seu perfil (com troca de foto) ou o de outra pessoa |
+| Direct | `/direct` | Chat em tempo real (`?user=<id>` já abre a conversa) |
+
+Sem login, só login, cadastro e redefinição abrem. As outras telas mandam para `/login`.
+
+## Estrutura
+
+```
+src/
+  types/api.ts           Tipos da API (User, Post, Mensagem, eventos do socket)
+  services/api.ts        Instância do axios: baseURL, token JWT e tratamento de 401
+  services/recursos.ts   Chamadas REST tipadas (login, posts, usuários, chat)
+  services/socket.ts     Conexão Socket.IO única, autenticada com o token
+  composables/useSessao  Sessão (token + usuário), salva no localStorage
+  router/                Rotas e proteção das telas que exigem login
+  components/            NavBar, BaseModal, PostCard, modais do feed, card de post compartilhado
+  views/                 Uma tela por rota
+```
+
+- **Autenticação:** o axios coloca `Authorization: Bearer <token>` em toda requisição. Se a API responder **401** (token expirado), a sessão é encerrada e o usuário volta para o login. O socket faz o mesmo quando o servidor recusa o token.
+- **Compartilhar post:** o Direct recebe só `[post:<id>]` pelo socket, e o card é montado buscando o post. O servidor bloqueia `POST /messages` e limita a mensagem a 2000 caracteres.
+
+### URL da API
+
+Por padrão, o app usa `https://json-server-auth-rede-social-xe91.onrender.com`. Para apontar para outro servidor (por exemplo, um json-server local), crie um `.env.local`:
+
+```
+VITE_API_URL=http://localhost:3000
+```
+
+### Publicação
+
+O app usa rotas de verdade (`/feed`, `/profile/2`…). Por isso, o servidor de arquivos estáticos precisa devolver o `index.html` para qualquer caminho. Em um Static Site no Render, adicione a regra **Rewrite** `/*` → `/index.html`. Build command: `npm ci && npm run build`. Publish directory: `dist`.
 
 ## Testes
 
-Testes E2E com [Playwright](https://playwright.dev/), escritos em TypeScript. Eles validam cada tela pelo navegador antes da migração para Vue 3 + axios.
+Testes E2E com [Playwright](https://playwright.dev/), escritos em TypeScript.
 
 ```bash
-npm install
 npx playwright install chromium   # só na primeira vez
 npm test                          # roda todos os testes
 npm run test:ui                   # modo visual, para depurar
-npm run typecheck                 # checa os tipos
 ```
 
-- **A API é simulada:** nenhum teste chama o Render. As respostas REST são interceptadas no navegador (`tests/e2e/helpers/api-mock.ts`), então os testes valem tanto com `fetch` quanto com `axios`.
+- **A API é simulada:** nenhum teste chama o Render. As respostas REST são interceptadas no navegador (`tests/e2e/helpers/api-mock.ts`).
 - **Socket.IO:** os testes sobem um servidor de socket local (`tests/e2e/mock-server/socket-server.ts`), que valida o JWT e segue o mesmo contrato do servidor real (`mensagem:enviar`, `mensagem:nova`, `digitando`).
-- **`VITE_API_URL`:** troca a URL da API (ver `data.js`). Sem ela, o app usa o Render. Os testes sobem o Vite na porta 5174, apontando para o servidor local.
-- **Tipos da API:** ficam em `src/types/api.ts` e serão reaproveitados pelo Vue.
-- **Na migração para Vue Router:** só os caminhos em `tests/e2e/helpers/rotas.ts` precisam mudar.
-- **Problemas conhecidos:** os testes marcados com `test.fail` registram problemas que ainda existem (XSS no feed, 401 sem tratamento etc.). Quando um deles for corrigido, o Playwright avisa para remover o `test.fail`.
-- **CI:** os testes rodam no GitHub Actions a cada push e PR na `main` (`.github/workflows/tests.yml`).
+- **Porta 5174:** os testes sobem o Vite nessa porta, com `VITE_API_URL` apontando para o servidor local, e nunca reaproveitam o seu `npm run dev`.
+- **Rotas:** os caminhos das telas ficam em `tests/e2e/helpers/rotas.ts`.
+- **Erros na página:** qualquer erro não tratado ou aviso do Vue durante um teste faz o teste falhar.
+- **CI:** o GitHub Actions roda typecheck, build e testes a cada push e PR na `main` (`.github/workflows/tests.yml`).

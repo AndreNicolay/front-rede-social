@@ -37,7 +37,20 @@ export class SocketControle {
   }
 }
 
-export const test = base.extend<{ api: ApiMock; socketServer: SocketControle }>({
+export const test = base.extend<{ api: ApiMock; socketServer: SocketControle; semErrosNaPagina: void }>({
+  // Falha o teste se a página tiver erro não tratado ou aviso do Vue, mesmo que a tela pareça funcionar
+  semErrosNaPagina: [
+    async ({ page }, use) => {
+      const erros: string[] = [];
+      page.on('pageerror', erro => erros.push(`erro: ${erro.message}`));
+      page.on('console', mensagem => {
+        if (mensagem.text().includes('[Vue warn]')) erros.push(mensagem.text());
+      });
+      await use();
+      expect(erros, 'a página teve erros ou avisos do Vue').toEqual([]);
+    },
+    { auto: true },
+  ],
   socketServer: [
     async ({ request }, use) => {
       await request.post(`${API_TESTE}/__test/reset`);

@@ -4,26 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SnapShot</title>
-  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-  <header class="navbar">
-    <h1 class="logo">SnapShot</h1>
-    <nav>
-      <a href="new-post/index.html">Nova postagem</a>
-      <a href="profile/index.html">Perfil</a>
-      <a href="direct/index.html">Direct</a>
-      <button id="logout-btn">Sair</button>
-    </nav>
-  </header>
-
-  <main id="feed" class="feed">
-    <p class="loading">Carregando posts...</p>
-  </main>
-
-  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
-  <script type="module" src="script.js"></script>
-
+  <div id="app"></div>
+  <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

@@ -28,7 +28,7 @@ test.describe('Feed', () => {
     expect(listagem.query.get('_order')).toBe('desc');
 
     await expect(cardDoPost(page, 'Pôr do sol na praia').getByText('2 curtida(s)')).toBeVisible();
-    await expect(cardDoPost(page, 'Café da manhã').locator('.comment-list')).toContainText('bruno' + 'Que delícia!');
+    await expect(cardDoPost(page, 'Café da manhã').locator('.comment-list')).toContainText('bruno Que delícia!');
   });
 
   test('sem posts mostra o convite para publicar', async ({ page, api }) => {
@@ -72,7 +72,7 @@ test.describe('Feed', () => {
     await card.getByPlaceholder('Adicione um comentário...').fill('Lindo demais');
     await card.getByRole('button', { name: 'Publicar' }).click();
 
-    await expect(cardDoPost(page, 'Pôr do sol na praia').locator('.comment-list')).toContainText('anaLindo demais');
+    await expect(cardDoPost(page, 'Pôr do sol na praia').locator('.comment-list')).toContainText('ana Lindo demais');
     const { comments } = api.chamadas('PATCH /posts/10')[0].corpo;
     expect(comments).toHaveLength(1);
     expect(comments[0]).toMatchObject({ userId: ana.id, username: 'ana', text: 'Lindo demais' });
@@ -89,7 +89,7 @@ test.describe('Feed', () => {
     const modal = page.locator('#likesModal');
     await expect(modal).toBeVisible();
     await expect(modal.locator('.like-user-item')).toHaveText(['bruno', 'carla']);
-    await modal.getByRole('button', { name: '×' }).click();
+    await modal.getByRole('button', { name: 'Fechar modal' }).click();
     await expect(modal).toBeHidden();
   });
 
@@ -158,38 +158,51 @@ test.describe('Feed', () => {
     expect(await lerStorage(page, 'user')).toBeNull();
   });
 
-  test.describe('Problemas conhecidos (corrigir na migração para Vue)', () => {
-    // test.fail: passa enquanto o problema existe; quando for corrigido, o Playwright avisa para tirar o fail
-
-    test.fail('legenda e comentários não deveriam executar HTML (XSS)', async ({ page, api }) => {
+  test.describe('Segurança e sessão', () => {
+    test('legenda e comentários com HTML aparecem como texto (sem XSS)', async ({ page, api }) => {
+      const ataque = '<img src="/nao-existe.png" onerror="window.__xss = true">';
       await logarComo(page, ana);
       api.colecao('posts', [
         criarPost({
           id: 30,
           userId: carla.id,
           username: carla.username,
-          caption: '<img src="/nao-existe.png" onerror="window.__xss = true">',
+          caption: ataque,
+          comments: [{ userId: carla.id, username: carla.username, text: ataque, createdAt: '2026-01-01T10:00:00.000Z' }],
         }),
       ]);
       await page.goto(rotas.feed);
       await expect(page.locator('.post-card')).toHaveCount(1);
 
-      await expect.poll(() => page.evaluate(() => (window as any).__xss ?? false), { timeout: 2_000 }).toBe(false);
-      await expect(page.locator('.caption')).toContainText('<img');
+      await expect(page.locator('.caption')).toContainText(ataque);
+      await expect(page.locator('.comment-list')).toContainText(ataque);
+      expect(await page.evaluate(() => (window as any).__xss ?? false)).toBe(false);
     });
 
-    test.fail('sem login não deveria chamar a API', async ({ page, api }) => {
+    test('sem login não chama a API', async ({ page, api }) => {
       api.colecao('posts', posts());
       await page.goto(rotas.feed);
       await expect(page).toHaveURL(naRota(rotas.login));
       expect(api.chamadas('GET /posts')).toHaveLength(0);
     });
 
-    test.fail('token expirado (401) deveria mandar para o login', async ({ page, api }) => {
+    test('token expirado (401) encerra a sessão e manda para o login', async ({ page, api }) => {
       await logarComo(page, ana);
       api.on('GET /posts', json('jwt expired', 401));
       await page.goto(rotas.feed);
-      await expect(page).toHaveURL(naRota(rotas.login), { timeout: 2_000 });
+
+      await expect(page).toHaveURL(naRota(rotas.login));
+      expect(await lerStorage(page, 'token')).toBeNull();
+      expect(await lerStorage(page, 'user')).toBeNull();
     });
+  });
+
+  test('vindo de um card do Direct, destaca o post', async ({ page, api }) => {
+    await logarComo(page, ana);
+    api.colecao('posts', posts());
+    await page.goto(rotas.feedDestacando(10));
+
+    await expect(cardDoPost(page, 'Pôr do sol na praia')).toHaveClass(/destacado/);
+    await expect(page.locator('.post-card.destacado')).toHaveCount(1);
   });
 });
