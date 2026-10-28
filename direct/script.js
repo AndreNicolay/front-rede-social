@@ -85,6 +85,35 @@ async function selecionarUsuario(usuario) {
   messageInput.focus();
 }
 
+// Post compartilhado pelo feed: a mensagem traz só "[post:<id>]".
+// Mensagens antigas guardavam o HTML do card inteiro; delas só aproveitamos o data-post-id.
+function idDoPostCompartilhado(texto) {
+  const atual = texto.trim().match(/^\[post:([\w-]+)\]$/);
+  if (atual) return atual[1];
+  const antigo = texto.includes('shared-post-preview') && texto.match(/data-post-id="([\w-]+)"/);
+  return antigo ? antigo[1] : null;
+}
+
+const postsCompartilhados = new Map(); // id do post -> Promise<post | null>
+function buscarPost(postId) {
+  if (!postsCompartilhados.has(postId)) {
+    postsCompartilhados.set(postId, fetch(`${API_URL}/posts/${encodeURIComponent(postId)}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(resposta => (resposta.ok ? resposta.json() : null)).catch(() => null));
+  }
+  return postsCompartilhados.get(postId);
+}
+
+// O card é montado aqui com escapeHtml, nunca a partir do HTML que veio na mensagem (evita XSS)
+function cardPostCompartilhado(postId, post) {
+  if (!post) return '<div class="shared-post-unavailable">Publicação indisponível</div>';
+  return `<div class="shared-post-preview" data-post-id="${escapeHtml(postId)}" title="Ver publicação">
+    <div class="shared-post-author">@${escapeHtml(post.username)}</div>
+    <img src="${escapeHtml(post.imageUrl)}" alt="Post compartilhado">
+    <div class="shared-post-caption">${escapeHtml(post.caption || 'Publicação')}</div>
+  </div>`;
+}
+
 // ✏️ Agora usa a rota /chat/:outroId do servidor (o GET /messages é bloqueado pela regra 400)
 async function carregarMensagens() {
   if (!selectedUser) return;
@@ -99,11 +128,14 @@ async function carregarMensagens() {
     .map(normalizarMensagem)
     .sort((a, b) => new Date(a.data) - new Date(b.data));
 
+  const idsPosts = [...new Set(mensagens.map(m => idDoPostCompartilhado(m.texto)).filter(Boolean))];
+  const posts = new Map(await Promise.all(idsPosts.map(async id => [id, await buscarPost(id)])));
+  if (alvo !== selectedUser) return;
+
   messagesElement.innerHTML = mensagens.length ? mensagens.map(mensagem => {
-    // Verifica se a mensagem é um post partilhado para não aplicar o escapeHtml e renderizar o card com imagem
-    const isSharedPost = mensagem.texto.includes('shared-post-preview');
-    const conteudo = isSharedPost ? mensagem.texto : escapeHtml(mensagem.texto);
-    
+    const postId = idDoPostCompartilhado(mensagem.texto);
+    const conteudo = postId ? cardPostCompartilhado(postId, posts.get(postId)) : escapeHtml(mensagem.texto);
+
     return `<div class="message ${mensagem.de === String(user.id) ? 'mine' : ''}">${conteudo}</div>`;
   }).join('') : '<p class="muted">Nenhuma mensagem ainda. Diga oi!</p>';
   messagesElement.scrollTop = messagesElement.scrollHeight;
