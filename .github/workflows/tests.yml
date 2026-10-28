@@ -24,6 +24,9 @@ jobs:
       - name: Checar tipos (TypeScript)
         run: npm run typecheck
 
+      - name: Build de produção
+        run: npm run build
+
       - name: Instalar o Chromium do Playwright
         run: npx playwright install --with-deps chromium
 

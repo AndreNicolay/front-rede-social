@@ -1,8 +1,6 @@
 // Simula a API REST interceptando a rede do navegador (page.route).
 // Funciona igual para fetch e axios, então os testes sobrevivem à migração.
 import type { Page, Route } from '@playwright/test';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { API_TESTE } from './config.ts';
 
 export interface Requisicao {
@@ -30,11 +28,6 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
-
-// Mesmo arquivo da CDN (versão fixada no package.json), servido localmente
-const SOCKET_IO_CLIENTE = fileURLToPath(
-  new URL('../../../node_modules/socket.io-client/dist/socket.io.min.js', import.meta.url),
-);
 
 interface Rota {
   metodo: string;
@@ -125,14 +118,8 @@ export class ApiMock {
   }
 
   async instalar(page: Page): Promise<void> {
-    // Fora do localhost: serve o cliente Socket.IO da CDN e bloqueia o resto (imagens externas etc.)
-    await page.route(
-      url => url.hostname !== 'localhost',
-      route =>
-        route.request().url().startsWith('https://cdn.socket.io/')
-          ? route.fulfill({ path: SOCKET_IO_CLIENTE, contentType: 'application/javascript' })
-          : route.abort('blockedbyclient'),
-    );
+    // Nada sai do localhost (imagens externas, Render etc.)
+    await page.route(url => url.hostname !== 'localhost', route => route.abort('blockedbyclient'));
 
     await page.route(url => url.origin === API_TESTE, route => this.atender(route));
   }

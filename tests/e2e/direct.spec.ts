@@ -209,35 +209,39 @@ test.describe('Direct', () => {
       expect(api.chamadas('GET /chat/:id').every(r => r.caminho === `/chat/${bruno.id}`)).toBe(true);
     });
 
-    test('token inválido é recusado pelo socket', async ({ page, api, socketServer }) => {
+    test('token recusado pelo socket encerra a sessão e manda para o login', async ({ page, api, socketServer }) => {
       await logarComo(page, ana, gerarToken(ana, { expirado: true }));
       api.colecao('users', usuarios());
       const erroDeConexao = page.waitForEvent('console', m => m.type() === 'error' && m.text().includes('não autorizado'));
       await page.goto(rotas.direct);
 
       await erroDeConexao;
+      await expect(page).toHaveURL(naRota(rotas.login));
+      expect(await lerStorage(page, 'token')).toBeNull();
       expect(await socketServer.conectados()).toEqual([]);
     });
   });
 
-  test('sair limpa a sessão e volta para o login', async ({ page, api }) => {
+  test('vindo do perfil (direct?user=<id>) já abre a conversa', async ({ page, api }) => {
+    await logarComo(page, ana);
+    api.colecao('users', usuarios());
+    api.on('GET /chat/:id', json([mensagemSocket(1, bruno.id, ana.id, 'Oi, Ana!', '2026-01-01T10:00:00.000Z')]));
+    await page.goto(rotas.directCom(bruno.id));
+
+    await expect(page.locator('#chat-header')).toContainText('bruno');
+    await expect(conversa(page).locator('.message')).toHaveText(['Oi, Ana!']);
+  });
+
+  test('sair limpa a sessão, desconecta o socket e volta para o login', async ({ page, api, socketServer }) => {
     await logarComo(page, ana);
     api.colecao('users', usuarios());
     await page.goto(rotas.direct);
     await expect(page.locator('#people-list .person')).toHaveCount(2);
+    await expect.poll(() => socketServer.conectados()).toContain(String(ana.id));
 
     await page.getByRole('button', { name: 'Sair' }).click();
     await expect(page).toHaveURL(naRota(rotas.login));
     expect(await lerStorage(page, 'token')).toBeNull();
-  });
-
-  test.describe('Problemas conhecidos (corrigir na migração para Vue)', () => {
-    test.fail('direct?user=<id> (vindo do perfil) deveria abrir a conversa', async ({ page, api }) => {
-      await logarComo(page, ana);
-      api.colecao('users', usuarios());
-      api.on('GET /chat/:id', json([]));
-      await page.goto(rotas.directCom(bruno.id));
-      await expect(page.locator('#chat-header')).toContainText('bruno', { timeout: 2_000 });
-    });
+    await expect.poll(() => socketServer.conectados()).toEqual([]);
   });
 });
