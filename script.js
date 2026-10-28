@@ -190,7 +190,16 @@ async function abrirModalCompartilhar(postId) {
   }
 }
 
-// Ação de enviar o post estruturado como mini card para o Direct
+// O servidor bloqueia POST /messages (regra 400): mensagens só são gravadas pelo socket.
+// A conexão é aberta só quando o usuário compartilha algo, e depois reaproveitada.
+let socket = null;
+function conectarSocket() {
+  if (!socket) socket = io(API_URL, { auth: { token } });
+  return socket;
+}
+
+// Envia ao Direct só a referência do post; o direct monta o card buscando o post
+// (o HTML do card com a imagem em base64 passaria do limite de 2000 caracteres do servidor)
 shareListContainer.addEventListener('click', async (e) => {
   const sendBtn = e.target.closest('.send-share-btn');
   if (!sendBtn || !postIdParaCompartilhar) return;
@@ -198,46 +207,20 @@ shareListContainer.addEventListener('click', async (e) => {
   const receiverId = sendBtn.dataset.receiverId;
 
   try {
-    const respPost = await fetch(`${API_URL}/posts/${postIdParaCompartilhar}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const postObj = await respPost.json();
-
-    // Mini card com tamanho compacto e imagem tratada (object-fit)
-    const mensagemHTML = `
-      <div class="shared-post-preview" data-post-id="${postIdParaCompartilhar}" style="border: 1px solid #dbdbdb; border-radius: 8px; overflow: hidden; max-width: 180px; background: #fff; margin: 2px 0; cursor: pointer;" title="Ver publicação">
-        <div style="display: flex; align-items: center; padding: 6px 8px; gap: 6px; font-size: 12px; font-weight: 600; color: #262626; border-bottom: 1px solid #efefef;">
-          <span>@${postObj.username}</span>
-        </div>
-        <img src="${postObj.imageUrl}" style="width: 100%; height: 120px; object-fit: cover; display: block;" alt="Post compartilhado">
-        <div style="padding: 6px 8px; font-size: 11px; color: #737373; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-          ${postObj.caption || 'Publicação'}
-        </div>
-      </div>
-    `;
-
-    const resposta = await fetch(`${API_URL}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        senderId: user.id,
-        receiverId: Number(receiverId),
-        text: mensagemHTML,
-        createdAt: new Date().toISOString()
-      })
+    const resposta = await conectarSocket().timeout(5000).emitWithAck('mensagem:enviar', {
+      paraId: Number(receiverId),
+      texto: `[post:${postIdParaCompartilhar}]`
     });
 
     if (resposta.ok) {
       alert('Post partilhado com sucesso no Direct!');
       shareModal.style.display = 'none';
     } else {
-      alert('Erro ao enviar a mensagem.');
+      alert(resposta.erro || 'Erro ao enviar a mensagem.');
     }
   } catch (error) {
     console.error("Erro ao enviar post:", error);
+    alert('Erro ao enviar a mensagem.');
   }
 });
 
